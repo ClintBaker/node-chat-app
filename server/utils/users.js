@@ -1,15 +1,9 @@
-[{
-  id: '',
-  name: '',
-  room: ''
-}]
-
 class Users {
   constructor () {
     this.users = [];
   }
   addUser (id, name, room) {
-    var user = {id, name, room};
+    var user = {id, name, room: room.toLowerCase()};
     this.users.push(user);
     return user;
   }
@@ -35,9 +29,9 @@ class Users {
 
     return namesArray;
   }
-}
+  }
 
-module.exports = {Users}
+module.exports = {Users};
 
 
 // class Person {

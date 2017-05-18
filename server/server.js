@@ -4,7 +4,7 @@ const express = require('express');
 const socketIO = require('socket.io');
 
 const {generateMessage, generateLocationMessage} = require('./utils/message');
-const {isRealString} = require('./utils/validation');
+const {isRealString, isOriginalName} = require('./utils/validation');
 const {Users} = require('./utils/users');
 
 const publicPath = path.join(__dirname, '../public');
@@ -24,11 +24,27 @@ io.on('connection', (socket) => {
       return callback('Name and room name are required');
     }
 
-    socket.join(params.room);
-    users.removeUser(socket.id);
-    users.addUser(socket.id, params.name, params.room);
+    function matchingNames (name, namesArray) {
+      return namesArray.filter((itemName) => itemName === name );
+    };
 
-    io.to(params.room).emit('updateUserList', users.getUserList(params.room));
+    var room = params.room.toLowerCase();
+
+    var namesArray = users.getUserList(room);
+    var sameNamesArray = matchingNames(params.name, namesArray);
+
+    if (sameNamesArray.length > 0) {
+      return callback('Username already taken.  Please be more original');
+    }
+
+
+    socket.join(room);
+    
+    users.removeUser(socket.id);
+
+    users.addUser(socket.id, params.name, room);
+
+    io.to(room).emit('updateUserList', users.getUserList(room));
 
     // socket.leave(params.room);
     // io.to(params.room).emit
@@ -36,7 +52,7 @@ io.on('connection', (socket) => {
     // socket.emit
 
     socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
-    socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} has joined`));
+    socket.broadcast.to(room).emit('newMessage', generateMessage('Admin', `${params.name} has joined`));
     callback();
   });
 
